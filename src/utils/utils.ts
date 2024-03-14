@@ -151,11 +151,3 @@ export function createElement<T extends HTMLElement>(
 	}
 	return element;
 }
-
-export interface IActions {
-	onClick: () => void;
-}
-
-export interface ICardBasked {
-	itemIndex: number;
-}
