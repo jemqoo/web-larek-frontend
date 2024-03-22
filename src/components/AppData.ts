@@ -3,7 +3,7 @@ import {
 	IProductItem,
 	IAppState,
 	IOrderForm,
-	IContactForm,
+	IOrder,
 	FormErrors,
 } from '../types';
 
@@ -17,57 +17,46 @@ export class ProductItem extends Model<IProductItem> {
 }
 
 export class AppState extends Model<IAppState> {
-	catalog: IProductItem[];
-	basket: string[];
-	order: IOrderForm | null;
+	catalog: ProductItem[];
+	basket: ProductItem[] = [];
+	order: IOrder = {
+		items: [],
+		payment: '',
+		total: 0,
+		address: '',
+		email: '',
+		phone: '',
+	};
 	formErrors: FormErrors = {};
 
-	toggleOrderedLot(id: string, isIncluded: boolean) {
-		if (isIncluded) {
-			this.order.items = _.uniq([...this.order.items, id]);
-		} else {
-			this.order.items = _.without(this.order.items, id);
-		}
+	setBasket(item: ProductItem) {
+		this.basket.push(item);
+		this.emitChanges('basket:changed');
 	}
 
-	clearBasket() {
-		this.order.items.forEach((id) => {
-			this.toggleOrderedLot(id, false);
-			this.catalog.find((it) => it.id === id).clearBid();
-		});
-	}
-
-	getTotal() {
-		return this.order.items.reduce(
-			(a, c) => a + this.catalog.find((it) => it.id === c).price,
-			0
-		);
-	}
-
-	setCatalog(items: ILot[]) {
-		this.catalog = items.map((item) => new LotItem(item, this.events));
+	setCatalog(items: IProductItem[]) {
+		this.catalog = items.map((item) => new ProductItem(item, this.events));
 		this.emitChanges('items:changed', { catalog: this.catalog });
 	}
 
-	setPreview(item: LotItem) {
-		this.preview = item.id;
-		this.emitChanges('preview:changed', item);
+	removeProduct(item: ProductItem) {
+		this.basket = this.basket.filter((el) => el.id !== item.id);
+		this.emitChanges('basket:changed');
 	}
 
-	getActiveLots(): LotItem[] {
-		return this.catalog.filter(
-			(item) => item.status === 'active' && item.isParticipate
-		);
+	clearBasket() {
+		this.basket = [];
 	}
 
-	getClosedLots(): LotItem[] {
-		return this.catalog.filter(
-			(item) => item.status === 'closed' && item.isMyBid
-		);
+	getTotal(): number {
+		return this.basket.reduce((a, b) => a + b.price, 0);
 	}
 
 	setOrderField(field: keyof IOrderForm, value: string) {
-		this.order[field] = value;
+		this.order = {
+			...this.order,
+			[field]: value,
+		};
 
 		if (this.validateOrder()) {
 			this.events.emit('order:ready', this.order);

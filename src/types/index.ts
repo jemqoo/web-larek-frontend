@@ -1,5 +1,5 @@
 // тип, описывающий ошибки валидации форм
-export type FormErrors = Partial<Record<keyof IOrderForm, string>>;
+export type FormErrors = Partial<Record<keyof IOrder, string>>;
 
 // интерфейс, описывающий карточку товара
 export interface IProductItem {
@@ -15,7 +15,7 @@ export interface IProductItem {
 export interface IAppState {
 	catalog: IProductItem[];
 	basket: string[];
-	order: IOrderForm | null;
+	order: IOrder | null;
 }
 
 // интерфейс для формы заказа
@@ -26,6 +26,12 @@ export interface IOrderForm {
 	total: number;
 	email: string;
 	phone: string;
+}
+
+// интерфейс для формы
+export interface IOrder extends IOrderForm {
+	total: number;
+	items: string[];
 }
 
 // интерфейс для формы контактов
