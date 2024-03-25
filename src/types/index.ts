@@ -16,6 +16,7 @@ export interface IAppState {
 	catalog: IProductItem[];
 	basket: string[];
 	order: IOrder | null;
+	preview: string | null;
 }
 
 // интерфейс для формы заказа

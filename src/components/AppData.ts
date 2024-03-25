@@ -27,6 +27,7 @@ export class AppState extends Model<IAppState> {
 		email: '',
 		phone: '',
 	};
+	preview: string | null;
 	formErrors: FormErrors = {};
 
 	setBasket(item: ProductItem) {
@@ -74,5 +75,10 @@ export class AppState extends Model<IAppState> {
 		this.formErrors = errors;
 		this.events.emit('formErrors:change', this.formErrors);
 		return Object.keys(errors).length === 0;
+	}
+
+	setPreview(item: ProductItem) {
+		this.preview = item.id;
+		this.emitChanges('preview:changed', item);
 	}
 }
