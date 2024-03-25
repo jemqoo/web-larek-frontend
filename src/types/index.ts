@@ -39,3 +39,8 @@ export interface IContactForm {
 	email: string;
 	phone: string;
 }
+
+// интерфейс для результата выполнения операции заказа
+export interface IOrderResult {
+	id: string;
+}
