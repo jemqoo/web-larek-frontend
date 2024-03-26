@@ -1,4 +1,4 @@
-// import './scss/styles.scss';
+import './scss/styles.scss';
 
 // import {AuctionAPI} from "./components/AuctionAPI";
 // import {API_URL, CDN_URL} from "./utils/constants";

@@ -265,7 +265,8 @@ constructor(protected blockName: string, container: HTMLElement actions?: ICardA
 2. set/get title(value: string) - сеттер и геттер для названия;
 3. set/get price(value: string) - сеттер и геттер для цены;
 4. set image(value: string) - сеттер для изображения;
-5. set category(value: CategoryType) - сеттер для категории.
+5. set description(value: string | string[]) - сеттер для описания;
+6. set category(value: keyof typeof CardCategory)/get category() - сеттер и геттер для категории.
 ```
 
 ### 7. Класс Order
