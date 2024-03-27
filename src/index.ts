@@ -45,72 +45,12 @@ const order = new Order(cloneTemplate(orderTemplate), events);
 // // Дальше идет бизнес-логика
 // // Поймали событие, сделали что нужно
 
-// // Изменения в лоте, но лучше все пересчитать
-// events.on('auction:changed', () => {
-// 	page.counter = appData.getClosedLots().length;
-// 	bids.items = appData.getActiveLots().map((item) => {
-// 		const card = new BidItem(cloneTemplate(cardBasketTemplate), {
-// 			onClick: () => events.emit('preview:changed', item),
-// 		});
-// 		return card.render({
-// 			title: item.title,
-// 			image: item.image,
-// 			status: {
-// 				amount: item.price,
-// 				status: item.isMyBid,
-// 			},
-// 		});
-// 	});
-// 	let total = 0;
-// 	basket.items = appData.getClosedLots().map((item) => {
-// 		const card = new BidItem(cloneTemplate(soldTemplate), {
-// 			onClick: (event) => {
-// 				const checkbox = event.target as HTMLInputElement;
-// 				appData.toggleOrderedLot(item.id, checkbox.checked);
-// 				basket.total = appData.getTotal();
-// 				basket.selected = appData.order.items;
-// 			},
-// 		});
-// 		return card.render({
-// 			title: item.title,
-// 			image: item.image,
-// 			status: {
-// 				amount: item.price,
-// 				status: item.isMyBid,
-// 			},
-// 		});
-// 	});
-// 	basket.selected = appData.order.items;
-// 	basket.total = total;
-// });
-
-// // Открытие корзины
-// events.on('basket:open', () => {
-// 	const basketItems = appData.basket.map((item, index) => {
-// 		const basketCard = new BasketCard(cloneTemplate(cardBasketTemplate), {
-// 			onClick: () => events.emit('basket:delete', item),
-// 		});
-// 		return basketCard.render({
-// 			title: item.title,
-// 			price: item.price,
-// 			index: index + 1,
-// 		});
-// 	});
-// 	modal.render({
-// 		content: basket.render({
-// 			total: appData.getTotal(),
-// 		}),
-// 	});
-// });
-
-///////////////////////////////////
-
-// Открыть товар
+// Открыть превью товара
 events.on('card:select', (item: ProductItem) => {
 	appData.setPreview(item);
 });
 
-// Изменились элементы каталога
+// Отображение товаров
 events.on('items:changed', () => {
 	page.catalog = appData.catalog.map((item) => {
 		const card = new CatalogItem(cloneTemplate(cardCatalogTemplate), {
@@ -126,7 +66,7 @@ events.on('items:changed', () => {
 	});
 });
 
-// Открыть превью товара
+// Открытие определенного товара
 events.on('preview:changed', (item: ProductItem) => {
 	const card = new CatalogItem(cloneTemplate(cardPreviewTemplate), {
 		onClick: () => {
@@ -145,90 +85,97 @@ events.on('preview:changed', (item: ProductItem) => {
 	});
 });
 
-// Изменен открытый выбранный товар
-
 // Добавление товара в корзину
-events.on('basket:add', (item: ProductItem) => {
+events.on('card:add', (item: ProductItem) => {
 	appData.setBasket(item);
-	page.counter = appData.getTotal();
+	page.counter = appData.basket.length;
 	modal.close();
 });
 
-// Открыть корзину
-events.on('basket:open', () => {
-	const items = appData.basket.map((item, index) => {
-		const product = new BasketCard(cloneTemplate(cardBasketTemplate), {
-			onClick: () => events.emit('basket:delete', item),
-		});
-		return product.render({
-			index: index + 1,
-			title: item.title,
-			description: item.description,
-			price: item.price?.toString() || '0',
-			category: item.category,
-		});
-	});
-	modal.render({
-		content: createElement<HTMLElement>('div', {}, [
-			basket.render({
-				items,
-				total: appData.getTotal(),
-			}),
-		]),
-	});
-});
+// // Открыть корзину
+// events.on('basket:open', () => {
+// 	const items = appData.basket.map((item, index) => {
+// 		const product = new BasketCard(cloneTemplate(cardBasketTemplate), {
+// 			onClick: () => events.emit('basket:delete', item),
+// 		});
+// 		return product.render({
+// 			index: index + 1,
+// 			title: item.title,
+// 			description: item.description,
+// 			price: item.price?.toString() || '0',
+// 			category: item.category,
+// 		});
+// 	});
+// 	modal.render({
+// 		content: createElement<HTMLElement>('div', {}, [
+// 			basket.render({
+// 				items,
+// 				total: appData.getTotal(),
+// 			}),
+// 		]),
+// 	});
+// });
 
-// Удаление товара из корзины
-events.on('basket:add', (item: ProductItem) => {
-	appData.removeProduct(item);
-});
+// // Удаление товара из корзины
+// events.on('basket:delete', (item: ProductItem) => {
+// 	appData.removeProduct(item);
+// });
 
-// Отправлена форма заказа
-events.on('order:submit', () => {
-	api
-		.orderLots(appData.order)
-		.then((result) => {
-			const success = new Success(cloneTemplate(successTemplate), {
-				onClick: () => {
-					modal.close();
-					appData.clearBasket();
-					events.emit('auction:changed');
-				},
-			});
+// // Отправлена форма заказа
+// events.on('order:submit', () => {
+// 	api
+// 		.orderLots(appData.order)
+// 		.then((result) => {
+// 			const success = new Success(cloneTemplate(successTemplate), {
+// 				onClick: () => {
+// 					modal.close();
+// 					appData.clearBasket();
+// 					events.emit('auction:changed');
+// 				},
+// 			});
 
-			modal.render({
-				content: success.render({}),
-			});
-		})
-		.catch((err) => {
-			console.error(err);
-		});
-});
+// 			modal.render({
+// 				content: success.render({}),
+// 			});
+// 		})
+// 		.catch((err) => {
+// 			console.error(err);
+// 		});
+// });
 
-// Очистить заказ и корзину
+// // Очистить заказ и корзину
+// events.on('basket:clear', () => {
+// 	appData.clearBasket();
+// });
 
-// Изменилось состояние валидации формы
-events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
-	const { email, phone } = errors;
-	order.valid = !email && !phone;
-	order.errors = Object.values({ phone, email })
-		.filter((i) => !!i)
-		.join('; ');
-});
+// // Изменилось состояние валидации формы
+// events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
+// 	const { email, phone } = errors;
+// 	order.valid = !email && !phone;
+// 	order.errors = Object.values({ phone, email })
+// 		.filter((i) => !!i)
+// 		.join('; ');
+// });
 
-// Изменилось одно из полей
+// // Изменилось одно из полей
+// events.on(
+// 	/^order\..*:change/,
+// 	(data: { field: keyof IOrderForm; value: string }) => {
+// 		appData.setOrderField(data.field, data.value);
+// 	}
+// );
 
-// Открыть форму заказа
-events.on('order:open', () => {
-	modal.render({
-		content: order.render({
-			phone: '',
-			email: '',
-			valid: false,
-			errors: [],
-		}),
-	});
-});
+// // Открыть форму заказа
+// events.on('order:open', () => {
+// 	modal.render({
+// 		content: order.render({
+// 			phone: '',
+// 			email: '',
+// 			valid: false,
+// 			errors: [],
+// 		}),
+// 	});
+// });
 
 // Блокируем прокрутку страницы если открыта модалка
 events.on('modal:open', () => {
