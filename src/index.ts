@@ -88,14 +88,14 @@ events.on('items:changed', () => {
 // 		});
 // });
 
-// // Изменилось состояние валидации формы
-// events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
-// 	const { email, phone } = errors;
-// 	order.valid = !email && !phone;
-// 	order.errors = Object.values({ phone, email })
-// 		.filter((i) => !!i)
-// 		.join('; ');
-// });
+// Изменилось состояние валидации формы
+events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
+	const { email, phone } = errors;
+	order.valid = !email && !phone;
+	order.errors = Object.values({ phone, email })
+		.filter((i) => !!i)
+		.join('; ');
+});
 
 // // Изменилось одно из полей
 // events.on(
@@ -185,68 +185,52 @@ events.on('card:select', (item: ProductItem) => {
 	appData.setPreview(item);
 });
 
-// // Изменен открытый выбранный лот
-// events.on('preview:changed', (item: ProductItem) => {
-// 	const showItem = (item: ProductItem) => {
-// 		const card = new AuctionItem(cloneTemplate(cardPreviewTemplate));
-// 		const auction = new Auction(cloneTemplate(auctionTemplate), {
-// 			onSubmit: (price) => {
-// 				item.placeBid(price);
-// 				auction.render({
-// 					status: item.status,
-// 					time: item.timeStatus,
-// 					label: item.auctionStatus,
-// 					nextBid: item.nextBid,
-// 					history: item.history,
-// 				});
-// 			},
-// 		});
-
-// 		modal.render({
-// 			content: card.render({
-// 				title: item.title,
-// 				image: item.image,
-// 				description: item.description.split('\n'),
-// 				status: auction.render({
-// 					status: item.status,
-// 					time: item.timeStatus,
-// 					label: item.auctionStatus,
-// 					nextBid: item.nextBid,
-// 					history: item.history,
-// 				}),
-// 			}),
-// 		});
-
-// 		if (item.status === 'active') {
-// 			auction.focus();
-// 		}
-// 	};
-
-// 	if (item) {
-// 		api
-// 			.getProductItem(item.id)
-// 			.then((result) => {
-// 				item.description = result.description;
-// 				item.history = result.history;
-// 				showItem(item);
-// 			})
-// 			.catch((err) => {
-// 				console.error(err);
-// 			});
-// 	} else {
-// 		modal.close();
-// 	}
-// });
-
-// // Блокируем прокрутку страницы если открыта модалка
-// events.on('modal:open', () => {
+// events.on('card:select', (item: ProductItem) => {
 // 	page.locked = true;
+// 	const product = new CatalogItem(cloneTemplate(cardPreviewTemplate), {
+// 		onClick: () => {
+// 			events.emit('card:toBasket', item);
+// 		},
+// 	});
+// 	modal.render({
+// 		content: product.render({
+// 			title: item.title,
+// 			image: item.image,
+// 			category: item.category,
+// 			description: item.description,
+// 			price: item.price,
+// 		}),
+// 	});
 // });
 
-// // ... и разблокируем
-// events.on('modal:close', () => {
-// 	page.locked = false;
-// });
+// Изменен открытый выбранный лот
+events.on('preview:changed', (item: ProductItem) => {
+	const card = new CatalogItem(cloneTemplate(cardPreviewTemplate), {
+		onClick: () => {
+			events.emit('card:add', item);
+		},
+	});
+
+	modal.render({
+		content: card.render({
+			title: item.title,
+			image: item.image,
+			category: item.category,
+			description: item.description,
+			price: item.price,
+		}),
+	});
+});
+
+// Блокируем прокрутку страницы если открыта модалка
+events.on('modal:open', () => {
+	page.locked = true;
+});
+
+// ... и разблокируем
+events.on('modal:close', () => {
+	page.locked = false;
+});
 
 // Получаем лоты с сервера
 api
