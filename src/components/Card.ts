@@ -131,3 +131,26 @@ export class BasketCard extends Card<IBasketCard> {
 		this.setText(this._index, value.toString());
 	}
 }
+
+export type CatalogItemStatus = {
+	status: boolean;
+};
+
+export class CatalogItem extends Card<CatalogItemStatus> {
+	constructor(container: HTMLElement, actions?: ICardActions) {
+		super('card', container, actions);
+		this._image = ensureElement<HTMLImageElement>(`.card__image`, container);
+	}
+
+	set status({ status }: CatalogItemStatus) {
+		if (this._button) {
+			if (this.price === null) {
+				this.setText(this._button, 'Недоступно');
+				this._button.disabled = true;
+			} else {
+				this.setText(this._button, status ? 'Уже в корзине' : 'В корзину');
+				this._button.disabled = status;
+			}
+		}
+	}
+}

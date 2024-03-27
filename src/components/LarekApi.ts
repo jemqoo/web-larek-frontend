@@ -10,19 +10,20 @@ export interface ILarekApi {
 export class LarekApi extends Api implements ILarekApi {
 	readonly cdn: string;
 
-	constructor(baseUrl: string, options?: RequestInit) {
+	constructor(cdn: string, baseUrl: string, options?: RequestInit) {
 		super(baseUrl, options);
+		this.cdn = cdn;
 	}
 
 	getProductItem(id: string): Promise<IProductItem> {
-		return this.get(`/lot/${id}`).then((item: IProductItem) => ({
+		return this.get(`/product/${id}`).then((item: IProductItem) => ({
 			...item,
 			image: this.cdn + item.image,
 		}));
 	}
 
 	getProducts(): Promise<IProductItem[]> {
-		return this.get('/lot').then((data: ApiListResponse<IProductItem>) =>
+		return this.get('/product').then((data: ApiListResponse<IProductItem>) =>
 			data.items.map((item) => ({
 				...item,
 				image: this.cdn + item.image,
