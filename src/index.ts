@@ -92,34 +92,32 @@ events.on('card:add', (item: ProductItem) => {
 	modal.close();
 });
 
-// // Открыть корзину
-// events.on('basket:open', () => {
-// 	const items = appData.basket.map((item, index) => {
-// 		const product = new BasketCard(cloneTemplate(cardBasketTemplate), {
-// 			onClick: () => events.emit('basket:delete', item),
-// 		});
-// 		return product.render({
-// 			index: index + 1,
-// 			title: item.title,
-// 			description: item.description,
-// 			price: item.price?.toString() || '0',
-// 			category: item.category,
-// 		});
-// 	});
-// 	modal.render({
-// 		content: createElement<HTMLElement>('div', {}, [
-// 			basket.render({
-// 				items,
-// 				total: appData.getTotal(),
-// 			}),
-// 		]),
-// 	});
-// });
+// Открыть корзину
+events.on('basket:changed', () => {
+	const items = appData.basket.map((item, index) => {
+		const product = new BasketCard(cloneTemplate(cardBasketTemplate), {
+			onClick: () => events.emit('basket:delete', item),
+		});
+		return product.render({
+			index: index + 1,
+			title: item.title,
+			description: item.description,
+			price: item.price,
+			category: item.category,
+		});
+	});
+	modal.render({
+		content: basket.render({
+			items,
+			total: appData.getTotal(),
+		}),
+	});
+});
 
-// // Удаление товара из корзины
-// events.on('basket:delete', (item: ProductItem) => {
-// 	appData.removeProduct(item);
-// });
+// Удаление товара из корзины
+events.on('basket:delete', (item: ProductItem) => {
+	appData.removeProduct(item);
+});
 
 // // Отправлена форма заказа
 // events.on('order:submit', () => {
