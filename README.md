@@ -372,4 +372,6 @@ export interface IOrderResult {
 'card:add'
 'basket:clear'
 'basket:changed'
+'orderAddress:changed'
+'orderContacts:changed'
 ```

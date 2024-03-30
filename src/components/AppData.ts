@@ -53,11 +53,15 @@ export class AppState extends Model<IAppState> {
 		return this.basket.reduce((a, b) => a + b.price, 0);
 	}
 
-	setOrderField(field: keyof IOrderForm, value: string) {
-		this.order = {
-			...this.order,
-			[field]: value,
-		};
+	setOrderField(field: keyof IOrderForm, value: string | number) {
+		if (field === 'total') {
+			this.order[field] = value as number;
+		} else if (field === 'items') {
+			const arr = this.order[field];
+			arr.push(value as string);
+		} else {
+			this.order[field] = value as string;
+		}
 
 		if (this.validateOrder()) {
 			this.events.emit('order:ready', this.order);
@@ -71,6 +75,9 @@ export class AppState extends Model<IAppState> {
 		}
 		if (!this.order.phone) {
 			errors.phone = 'Необходимо указать телефон';
+		}
+		if (!this.order.address) {
+			errors.address = 'Неоходимо указать адрес';
 		}
 		this.formErrors = errors;
 		this.events.emit('formErrors:change', this.formErrors);

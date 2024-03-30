@@ -10,7 +10,7 @@ import { cloneTemplate, createElement, ensureElement } from './utils/utils';
 import { Modal } from './components/common/Modal';
 import { Basket } from './components/common/Basket';
 import { IOrderForm, IContactForm, IOrder } from './types';
-import { Order } from './components/Order';
+import { Order, Contacts } from './components/Order';
 import { Success } from './components/common/Success';
 
 const events = new EventEmitter();
@@ -40,7 +40,7 @@ const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
 const basket = new Basket(cloneTemplate(basketTemplate), events);
 
 const order = new Order(cloneTemplate(orderTemplate), events);
-// const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
+const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
 
 // // Дальше идет бизнес-логика
 // // Поймали событие, сделали что нужно
@@ -119,7 +119,7 @@ events.on('basket:delete', (item: ProductItem) => {
 	appData.removeProduct(item);
 });
 
-// // Отправлена форма заказа
+// Отправлена форма заказа
 // events.on('order:submit', () => {
 // 	api
 // 		.orderLots(appData.order)
@@ -128,7 +128,7 @@ events.on('basket:delete', (item: ProductItem) => {
 // 				onClick: () => {
 // 					modal.close();
 // 					appData.clearBasket();
-// 					events.emit('auction:changed');
+// 					events.emit('formErrors:changed');
 // 				},
 // 			});
 
@@ -141,40 +141,63 @@ events.on('basket:delete', (item: ProductItem) => {
 // 		});
 // });
 
-// // Очистить заказ и корзину
-// events.on('basket:clear', () => {
-// 	appData.clearBasket();
-// });
+events.on('order:submit', () => {
+	appData.basket.forEach((order) => {
+		appData.setOrderField('items', order.id);
+	});
+	modal.render({
+		content: contacts.render({
+			valid: false,
+			errors: [],
+		}),
+	});
+});
 
-// // Изменилось состояние валидации формы
-// events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
-// 	const { email, phone } = errors;
+// Изменилось состояние валидации формы
+// events.on('formErrors:change', (errors: Partial<IOrder>) => {
+// 	const { email, phone, address } = errors;
 // 	order.valid = !email && !phone;
-// 	order.errors = Object.values({ phone, email })
+// 	order.errors = Object.values({ phone, email, address })
 // 		.filter((i) => !!i)
 // 		.join('; ');
 // });
 
-// // Изменилось одно из полей
-// events.on(
-// 	/^order\..*:change/,
-// 	(data: { field: keyof IOrderForm; value: string }) => {
-// 		appData.setOrderField(data.field, data.value);
-// 	}
-// );
+// Изменилось одно из полей
+events.on(
+	/^order\..*:change/,
+	(data: { field: keyof IOrderForm; value: string }) => {
+		appData.setOrderField(data.field, data.value);
+	}
+);
 
-// // Открыть форму заказа
-// events.on('order:open', () => {
-// 	modal.render({
-// 		content: order.render({
-// 			phone: '',
-// 			email: '',
-// 			valid: false,
-// 			errors: [],
-// 		}),
-// 	});
-// });
+events.on('order:changed', () => {
+	order.valid = order.isAddress() && order.isAltActive();
+});
 
+events.on('formErrors:changed', () => {
+	contacts.valid = contacts.isPhone() && contacts.isEmail();
+});
+
+// Открыть форму заказа
+events.on('order:open', () => {
+	modal.render({
+		content: order.render({
+			phone: '',
+			email: '',
+			valid: false,
+			errors: [],
+		}),
+	});
+});
+
+// Изменилось состояние валидации контактов
+events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
+	const { email, phone, address } = errors;
+	contacts.valid = !email && !phone && !address;
+	contacts.errors = Object.values({ phone, email, address })
+		.filter((i) => !!i)
+		.join('; ');
+});
 // Блокируем прокрутку страницы если открыта модалка
 events.on('modal:open', () => {
 	page.locked = true;
