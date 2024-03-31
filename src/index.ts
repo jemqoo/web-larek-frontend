@@ -9,9 +9,9 @@ import { BasketCard, CatalogItem } from './components/Card';
 import { cloneTemplate, createElement, ensureElement } from './utils/utils';
 import { Modal } from './components/common/Modal';
 import { Basket } from './components/common/Basket';
-import { IOrderForm, IContactForm, IOrder } from './types';
 import { Order, Contacts } from './components/Order';
 import { Success } from './components/common/Success';
+import { IOrderForm } from './types';
 
 const events = new EventEmitter();
 const api = new LarekApi(CDN_URL, API_URL);
@@ -42,33 +42,8 @@ const basket = new Basket(cloneTemplate(basketTemplate), events);
 const order = new Order(cloneTemplate(orderTemplate), events);
 const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
 
-const success = new Success(cloneTemplate(successTemplate), {
-	onClick: () => {
-		events.emit('modal:close');
-		modal.close();
-	},
-});
-
 // // Дальше идет бизнес-логика
 // // Поймали событие, сделали что нужно
-
-// Блокируем прокрутку страницы если открыта модалка
-events.on('modal:open', () => {
-	page.locked = true;
-});
-
-// ... и разблокируем
-events.on('modal:close', () => {
-	page.locked = false;
-});
-
-// Получаем лоты с сервера
-api
-	.getProducts()
-	.then(appData.setCatalog.bind(appData))
-	.catch((err) => {
-		console.error(err);
-	});
 
 // Открыть превью товара
 events.on('card:select', (item: ProductItem) => {
@@ -204,7 +179,57 @@ events.on('contacts:submit', () => {
 		});
 });
 
+// Очистить данные после оформления заказа
 events.on('clear:order', () => {
 	appData.clearBasket();
 	appData.clearOrder();
 });
+
+// Блокируем прокрутку страницы если открыта модалка
+events.on('modal:open', () => {
+	page.locked = true;
+});
+
+// ... и разблокируем
+events.on('modal:close', () => {
+	page.locked = false;
+});
+
+// Получаем лоты с сервера
+api
+	.getProducts()
+	.then(appData.setCatalog.bind(appData))
+	.catch((err) => {
+		console.error(err);
+	});
+
+// Изменение состояния валидации форм
+events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
+	const { email, phone, address } = errors;
+	order.errors = contacts.errors = Object.values({ email, phone, address })
+		.filter((i) => !!i)
+		.join('; ');
+});
+
+// Изменилось одно из полей
+events.on(
+	/(^order|^contacts)\..*:change/,
+	(data: {
+		field: keyof Omit<IOrderForm, 'items' | 'total'>;
+		value: string;
+	}) => {
+		appData.setOrderField(data.field, data.value);
+	}
+);
+events.on(
+	/^order\..*:change/,
+	(data: { field: keyof IOrderForm; value: string }) => {
+		appData.setOrderField(data.field, data.value);
+	}
+);
+events.on(
+	/^contacts\..*:change/,
+	(data: { field: keyof IOrderForm; value: string }) => {
+		appData.setOrderField(data.field, data.value);
+	}
+);

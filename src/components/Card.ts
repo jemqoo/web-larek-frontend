@@ -38,10 +38,6 @@ export class Card<T> extends Component<ICard> {
 		super(container);
 
 		this._title = ensureElement<HTMLElement>(`.${blockName}__title`, container);
-		// this._image = ensureElement<HTMLImageElement>(
-		// 	`.${blockName}__image`,
-		// 	container
-		// );
 		this._button = container.querySelector(`.${blockName}__button`);
 		this._description = container.querySelector(`.${blockName}__description`);
 		this._price = container.querySelector(`.${blockName}__price`);
