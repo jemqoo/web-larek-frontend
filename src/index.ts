@@ -42,8 +42,33 @@ const basket = new Basket(cloneTemplate(basketTemplate), events);
 const order = new Order(cloneTemplate(orderTemplate), events);
 const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
 
+const success = new Success(cloneTemplate(successTemplate), {
+	onClick: () => {
+		events.emit('modal:close');
+		modal.close();
+	},
+});
+
 // // Дальше идет бизнес-логика
 // // Поймали событие, сделали что нужно
+
+// Блокируем прокрутку страницы если открыта модалка
+events.on('modal:open', () => {
+	page.locked = true;
+});
+
+// ... и разблокируем
+events.on('modal:close', () => {
+	page.locked = false;
+});
+
+// Получаем лоты с сервера
+api
+	.getProducts()
+	.then(appData.setCatalog.bind(appData))
+	.catch((err) => {
+		console.error(err);
+	});
 
 // Открыть превью товара
 events.on('card:select', (item: ProductItem) => {
@@ -119,29 +144,26 @@ events.on('basket:delete', (item: ProductItem) => {
 	appData.removeProduct(item);
 });
 
-// Отправлена форма заказа
-// events.on('order:submit', () => {
-// 	api
-// 		.orderLots(appData.order)
-// 		.then((result) => {
-// 			const success = new Success(cloneTemplate(successTemplate), {
-// 				onClick: () => {
-// 					modal.close();
-// 					appData.clearBasket();
-// 					events.emit('formErrors:changed');
-// 				},
-// 			});
+// Клик на кнопку "Оформить"
+events.on('order:open', () => {
+	appData.setOrderField('payment', appData.getTotal());
+	modal.render({
+		content: order.render({
+			address: ' ',
+			valid: false,
+			errors: [],
+		}),
+	});
+});
 
-// 			modal.render({
-// 				content: success.render({}),
-// 			});
-// 		})
-// 		.catch((err) => {
-// 			console.error(err);
-// 		});
-// });
+// Активировать кнопку "Далее"
+events.on('order:changed', () => {
+	order.valid = order.isAddress() && order.isAltActive();
+});
 
+// Клик на кнопку "Далее"
 events.on('order:submit', () => {
+	appData.order.total = appData.getTotal();
 	appData.basket.forEach((order) => {
 		appData.setOrderField('items', order.id);
 	});
@@ -153,65 +175,36 @@ events.on('order:submit', () => {
 	});
 });
 
-// Изменилось состояние валидации формы
-// events.on('formErrors:change', (errors: Partial<IOrder>) => {
-// 	const { email, phone, address } = errors;
-// 	order.valid = !email && !phone;
-// 	order.errors = Object.values({ phone, email, address })
-// 		.filter((i) => !!i)
-// 		.join('; ');
-// });
-
-// Изменилось одно из полей
-events.on(
-	/^order\..*:change/,
-	(data: { field: keyof IOrderForm; value: string }) => {
-		appData.setOrderField(data.field, data.value);
-	}
-);
-
-events.on('order:changed', () => {
-	order.valid = order.isAddress() && order.isAltActive();
-});
-
+// Активировать кнопку "Оплатить"
 events.on('formErrors:changed', () => {
 	contacts.valid = contacts.isPhone() && contacts.isEmail();
 });
 
-// Открыть форму заказа
-events.on('order:open', () => {
-	modal.render({
-		content: order.render({
-			phone: '',
-			email: '',
-			valid: false,
-			errors: [],
-		}),
-	});
+// Клик на кнопку "Оплатить"
+events.on('contacts:submit', () => {
+	api
+		.orderLots(appData.order)
+		.then(() => {
+			const success = new Success(cloneTemplate(successTemplate), {
+				onClick: () => {
+					modal.close();
+					page.counter = 0;
+					events.emit('clear:order');
+				},
+			});
+
+			modal.render({
+				content: success.render({
+					description: appData.getTotal(),
+				}),
+			});
+		})
+		.catch((err) => {
+			console.error(err);
+		});
 });
 
-// Изменилось состояние валидации контактов
-events.on('formErrors:change', (errors: Partial<IOrderForm>) => {
-	const { email, phone, address } = errors;
-	contacts.valid = !email && !phone && !address;
-	contacts.errors = Object.values({ phone, email, address })
-		.filter((i) => !!i)
-		.join('; ');
+events.on('clear:order', () => {
+	appData.clearBasket();
+	appData.clearOrder();
 });
-// Блокируем прокрутку страницы если открыта модалка
-events.on('modal:open', () => {
-	page.locked = true;
-});
-
-// ... и разблокируем
-events.on('modal:close', () => {
-	page.locked = false;
-});
-
-// Получаем лоты с сервера
-api
-	.getProducts()
-	.then(appData.setCatalog.bind(appData))
-	.catch((err) => {
-		console.error(err);
-	});

@@ -6,7 +6,7 @@ import { ensureElement } from '../utils/utils';
 export class Order extends Form<IOrderForm> {
 	protected _card: HTMLButtonElement;
 	protected _cash: HTMLButtonElement;
-	protected _button: HTMLElement;
+	// protected _button: HTMLElement;
 	protected _address: HTMLInputElement;
 
 	constructor(container: HTMLFormElement, events: IEvents) {
@@ -15,7 +15,7 @@ export class Order extends Form<IOrderForm> {
 		this._card = container.elements.namedItem('card') as HTMLButtonElement;
 		this._cash = container.elements.namedItem('cash') as HTMLButtonElement;
 		this._address = ensureElement<HTMLInputElement>(`.form__input`, container);
-		this._button = this.container.querySelector('.order__button');
+		// this._button = this.container.querySelector('.order__button');
 
 		if (this._cash && this._card) {
 			this._cash.addEventListener('click', () => {
@@ -62,6 +62,7 @@ export class Contacts extends Form<IContactForm> {
 		this._phone = this.container.elements.namedItem(
 			'phone'
 		) as HTMLInputElement;
+
 		this._email.addEventListener('input', () => {
 			this.events.emit('formErrors:changed', this._errors);
 		});

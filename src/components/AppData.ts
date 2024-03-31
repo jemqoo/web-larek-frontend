@@ -21,11 +21,11 @@ export class AppState extends Model<IAppState> {
 	basket: ProductItem[] = [];
 	order: IOrder = {
 		items: [],
-		payment: '',
+		payment: ' ',
 		total: 0,
-		address: '',
-		email: '',
-		phone: '',
+		address: ' ',
+		email: ' ',
+		phone: ' ',
 	};
 	preview: string | null;
 	formErrors: FormErrors = {};
@@ -47,6 +47,17 @@ export class AppState extends Model<IAppState> {
 
 	clearBasket() {
 		this.basket = [];
+	}
+
+	clearOrder() {
+		this.order = {
+			items: [],
+			payment: ' ',
+			total: 0,
+			address: ' ',
+			email: ' ',
+			phone: ' ',
+		};
 	}
 
 	getTotal(): number {

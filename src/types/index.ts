@@ -44,4 +44,6 @@ export interface IContactForm {
 // интерфейс для результата выполнения операции заказа
 export interface IOrderResult {
 	id: string;
+	total: number;
+	error?: string;
 }
