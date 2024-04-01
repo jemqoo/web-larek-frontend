@@ -5,13 +5,14 @@ interface ICardActions {
 	onClick: (event: MouseEvent) => void;
 }
 
-export interface ICard {
+export interface ICard<T> {
 	category: string;
 	title: string;
 	description?: string | string[];
 	image: string;
 	price: string | number;
 	index: number;
+	status: T;
 }
 
 const CardCategory = {
@@ -22,7 +23,7 @@ const CardCategory = {
 	['дополнительное']: 'additional',
 };
 
-export class Card<T> extends Component<ICard> {
+export class Card<T> extends Component<ICard<T>> {
 	protected _title: HTMLElement;
 	protected _image: HTMLImageElement;
 	protected _description: HTMLElement;
@@ -39,7 +40,7 @@ export class Card<T> extends Component<ICard> {
 
 		this._title = ensureElement<HTMLElement>(`.${blockName}__title`, container);
 		this._button = container.querySelector(`.${blockName}__button`);
-		this._description = container.querySelector(`.${blockName}__description`);
+		this._description = container.querySelector(`.${blockName}__text`);
 		this._price = container.querySelector(`.${blockName}__price`);
 		this._category = container.querySelector(`.${blockName}__category`);
 
@@ -140,7 +141,7 @@ export class CatalogItem extends Card<CatalogItemStatus> {
 
 	set status({ status }: CatalogItemStatus) {
 		if (this._button) {
-			if (this.price === null) {
+			if (this.price === 'Бесценно') {
 				this.setText(this._button, 'Недоступно');
 				this._button.disabled = true;
 			} else {

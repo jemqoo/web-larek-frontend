@@ -15,18 +15,20 @@ export class Order extends Form<IOrderForm> {
 		this._cash = container.elements.namedItem('cash') as HTMLButtonElement;
 		this._address = ensureElement<HTMLInputElement>(`.form__input`, container);
 
-		if (this._cash && this._card) {
+		if (this._cash) {
 			this._cash.addEventListener('click', () => {
 				this._cash.classList.add('button_alt-active');
 				this._card.classList.remove('button_alt-active');
+				this.events.emit('order:changed');
 			});
+		}
 
+		if (this._card) {
 			this._card.addEventListener('click', () => {
 				this._card.classList.add('button_alt-active');
 				this._cash.classList.remove('button_alt-active');
+				this.events.emit('order:changed');
 			});
-
-			this.events.emit('order:changed');
 		}
 
 		this._address.addEventListener('input', () => {
@@ -45,6 +47,13 @@ export class Order extends Form<IOrderForm> {
 
 	isAltActive() {
 		return !!this.container.querySelector('.button_alt-active');
+	}
+
+	clearOrder() {
+		(this.container.elements.namedItem('address') as HTMLInputElement).value =
+			'';
+		this._cash.classList.remove('button_alt-active');
+		this._card.classList.remove('button_alt-active');
 	}
 }
 
@@ -87,5 +96,10 @@ export class Contacts extends Form<IContactForm> {
 
 	isEmail() {
 		return !!this._email.value;
+	}
+
+	clearContacts() {
+		(this.container.elements.namedItem('phone') as HTMLInputElement).value = '';
+		(this.container.elements.namedItem('email') as HTMLInputElement).value = '';
 	}
 }

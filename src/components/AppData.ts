@@ -23,7 +23,7 @@ export class AppState extends Model<IAppState> {
 		items: [],
 		payment: ' ',
 		total: 0,
-		address: ' ',
+		address: '',
 		email: ' ',
 		phone: ' ',
 	};
@@ -31,6 +31,7 @@ export class AppState extends Model<IAppState> {
 	formErrors: FormErrors = {};
 
 	setBasket(item: ProductItem) {
+		if (this.basket.includes(item)) return;
 		this.basket.push(item);
 		this.emitChanges('basket:changed');
 	}
@@ -47,6 +48,14 @@ export class AppState extends Model<IAppState> {
 
 	clearBasket() {
 		this.basket = [];
+		this.order = {
+			payment: '',
+			email: ' ',
+			phone: ' ',
+			address: '',
+			total: 0,
+			items: [],
+		};
 	}
 
 	clearOrder() {
@@ -54,7 +63,7 @@ export class AppState extends Model<IAppState> {
 			items: [],
 			payment: ' ',
 			total: 0,
-			address: ' ',
+			address: '',
 			email: ' ',
 			phone: ' ',
 		};

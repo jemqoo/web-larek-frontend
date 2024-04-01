@@ -30,7 +30,7 @@ const successTemplate = ensureElement<HTMLTemplateElement>('#success');
 const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
 const cardBasketTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 // Модель данных приложения
-const appData = new AppState({}, events);
+const appState = new AppState({}, events);
 
 // Глобальные контейнеры
 const page = new Page(document.body, events);
@@ -47,12 +47,12 @@ const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
 
 // Открыть превью товара
 events.on('card:select', (item: ProductItem) => {
-	appData.setPreview(item);
+	appState.setPreview(item);
 });
 
 // Отображение товаров
 events.on('items:changed', () => {
-	page.catalog = appData.catalog.map((item) => {
+	page.catalog = appState.catalog.map((item) => {
 		const card = new CatalogItem(cloneTemplate(cardCatalogTemplate), {
 			onClick: () => events.emit('card:select', item),
 		});
@@ -81,20 +81,23 @@ events.on('preview:changed', (item: ProductItem) => {
 			category: item.category,
 			description: item.description,
 			price: item.price !== null ? item.price + ' синапсов' : 'Бесценно',
+			status: {
+				status: item.price === null || appState.basket.includes(item),
+			},
 		}),
 	});
 });
 
 // Добавление товара в корзину
 events.on('card:add', (item: ProductItem) => {
-	appData.setBasket(item);
-	page.counter = appData.basket.length;
+	appState.setBasket(item);
+	page.counter = appState.basket.length;
 	modal.close();
 });
 
 // Открыть корзину
 events.on('basket:changed', () => {
-	const items = appData.basket.map((item, index) => {
+	const items = appState.basket.map((item, index) => {
 		const product = new BasketCard(cloneTemplate(cardBasketTemplate), {
 			onClick: () => events.emit('basket:delete', item),
 		});
@@ -109,22 +112,23 @@ events.on('basket:changed', () => {
 	modal.render({
 		content: basket.render({
 			items,
-			total: appData.getTotal(),
+			total: appState.getTotal(),
 		}),
 	});
 });
 
 // Удаление товара из корзины
 events.on('basket:delete', (item: ProductItem) => {
-	appData.removeProduct(item);
+	page.counter = appState.basket.length - 1;
+	appState.removeProduct(item);
 });
 
 // Клик на кнопку "Оформить"
 events.on('order:open', () => {
-	appData.setOrderField('payment', appData.getTotal());
+	appState.setOrderField('payment', appState.getTotal());
 	modal.render({
 		content: order.render({
-			address: ' ',
+			address: '',
 			valid: false,
 			errors: [],
 		}),
@@ -138,9 +142,9 @@ events.on('order:changed', () => {
 
 // Клик на кнопку "Далее"
 events.on('order:submit', () => {
-	appData.order.total = appData.getTotal();
-	appData.basket.forEach((order) => {
-		appData.setOrderField('items', order.id);
+	appState.order.total = appState.getTotal();
+	appState.basket.forEach((order) => {
+		appState.setOrderField('items', order.id);
 	});
 	modal.render({
 		content: contacts.render({
@@ -158,8 +162,9 @@ events.on('formErrors:changed', () => {
 // Клик на кнопку "Оплатить"
 events.on('contacts:submit', () => {
 	api
-		.orderLots(appData.order)
-		.then(() => {
+		.orderLots(appState.order)
+		.then((result) => {
+			page.counter = 0;
 			const success = new Success(cloneTemplate(successTemplate), {
 				onClick: () => {
 					modal.close();
@@ -167,12 +172,12 @@ events.on('contacts:submit', () => {
 					events.emit('clear:order');
 				},
 			});
-
 			modal.render({
 				content: success.render({
-					description: appData.getTotal(),
+					description: appState.getTotal(),
 				}),
 			});
+			events.emit('clear:order');
 		})
 		.catch((err) => {
 			console.error(err);
@@ -181,8 +186,10 @@ events.on('contacts:submit', () => {
 
 // Очистить данные после оформления заказа
 events.on('clear:order', () => {
-	appData.clearBasket();
-	appData.clearOrder();
+	appState.clearBasket();
+	appState.clearOrder();
+	order.clearOrder();
+	contacts.clearContacts();
 });
 
 // Блокируем прокрутку страницы если открыта модалка
@@ -198,7 +205,7 @@ events.on('modal:close', () => {
 // Получаем лоты с сервера
 api
 	.getProducts()
-	.then(appData.setCatalog.bind(appData))
+	.then(appState.setCatalog.bind(appState))
 	.catch((err) => {
 		console.error(err);
 	});
@@ -218,18 +225,18 @@ events.on(
 		field: keyof Omit<IOrderForm, 'items' | 'total'>;
 		value: string;
 	}) => {
-		appData.setOrderField(data.field, data.value);
+		appState.setOrderField(data.field, data.value);
 	}
 );
 events.on(
 	/^order\..*:change/,
 	(data: { field: keyof IOrderForm; value: string }) => {
-		appData.setOrderField(data.field, data.value);
+		appState.setOrderField(data.field, data.value);
 	}
 );
 events.on(
 	/^contacts\..*:change/,
 	(data: { field: keyof IOrderForm; value: string }) => {
-		appData.setOrderField(data.field, data.value);
+		appState.setOrderField(data.field, data.value);
 	}
 );
